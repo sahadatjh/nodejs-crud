@@ -1,13 +1,15 @@
-
 const { getUsers, getUser, createUser, updateUser, deleteUser } = require('./user.controller');
+const validate = require('../core/middlewares/validate');
+const { createUserSchema, updateUserSchema } = require('./user-schema');
+
 
 module.exports = ( app ) => {
     app.route('/users')
         .get(getUsers)
-        .post( createUser );
+        .post(validate(createUserSchema), createUser );
     
     app.route('/user/:email')
         .get( getUser )
-        .patch( updateUser )
+        .patch(validate(updateUserSchema), updateUser )
         .delete( deleteUser );
 }
