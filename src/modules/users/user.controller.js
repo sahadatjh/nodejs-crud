@@ -1,33 +1,50 @@
-const users = [ {"name":"Mr Sahadat", "email":"sahadat@gmail.com"} ]
+const bcrypt = require('bcrypt');
 
-function getUsers( req, res ) {
+const users = []
+
+function getUsers(req, res) {
     res.send(users);
 }
 
-function getUser( req, res ) {
-    const user = users.find( user => user.email === req.params.email );
-
-    if( !user ) return res.send("User not found!");
-
-    res.send( user );
+function homePage(req, res) {  
+    res.send('Welcome to our Homepage....');
 }
 
-function createUser ( req, res ) {
-    const body = req.body;
+function getUser(req, res) {
+    const user = users.find(user => user.email === req.params.email);
 
-    const user = users.find( user => user.email === body.email );
+    if(!user) return res.send("User not found!");
 
-    if( user ) return res.status(400).send("User already exists!");
-
-    users.push( body );
-
-    res.status(201).send(body);
+    res.send(user);
 }
 
-function updateUser( req, res ) {  
+function createUser (req, res) {
+    const {firstName, lastName, email, password } =  req.body;
+
+    const user = users.find(user => user.email === email);
+
+    if(user) return res.status(400).send("User already exists!");
+
+    const hashedPassword = bcrypt.hashSync(password, 9);
+
+    const newUser = {
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword
+    }
+
+    users.push(newUser);
+    
+    // delete newUser.password
+
+    res.status(201).send(newUser);
+}
+
+function updateUser(req, res) {  
     const body = req.body;
 
-    const user = users.find( user => user.email === req.params.email );
+    const user = users.find(user => user.email === req.params.email);
 
     if(!user) return res.status(404).send("User not found!");
 
@@ -36,18 +53,45 @@ function updateUser( req, res ) {
     res.send(user);
 }
 
-function deleteUser( req, res ) {
-    const user = users.find( user => user.email === req.params.email );
+function deleteUser(req, res) {
+    const user = users.find(user => user.email === req.params.email);
     
-    if( !user ) return res.send("User not found!");
+    if(!user) return res.send("User not found!");
 
-    users = users.filter( user => user.email !== req.params.email ); //reasign user array
+    users = users.filter(user => user.email !== req.params.email); //reasign user array
     
     res.send(user);
 }
 
+function login(req, res) {  
+    const { email, password } = req.body;
+
+    const user = users.find(user => user.email === email);
+
+    if(!user) return res.status(400).send('Invalid credential!');
+
+    const passwordMached = bcrypt.compareSync(password, user.password);
+
+    if(!passwordMached) return res.status(400).send('Invaid credentials!');
+    
+    // const modifiedUser = [...user];
+    // delete modifiedUser.password;
+    
+    res.status(200).send(user);
+}
+
+function findUser(email){
+    const user = users.find(user => user.email === email);
+    
+    if(!user) return res.status(404).send('User not found');
+    
+    return user;
+}
+
+module.exports.homePage = homePage;
 module.exports.getUsers = getUsers;
 module.exports.getUser = getUser;
 module.exports.createUser = createUser;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;
+module.exports.login = login;
