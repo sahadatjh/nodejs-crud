@@ -3,9 +3,21 @@ const bcrypt = require('bcrypt');
 const users = []
 
 function getUsers(req, res) {
-    res.send(users);
-}
+    // const allUsers = [...users];
 
+    // allUsers.map(user => delete user.password);
+
+    // res.status(200).send(allUsers);
+
+    const usersWithoutPassword = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        
+        return userWithoutPassword;
+    });
+    
+    res.status(200).send(usersWithoutPassword);
+}
+ 
 function homePage(req, res) {  
     res.send('Welcome to our Homepage....');
 }
@@ -36,19 +48,24 @@ function createUser (req, res) {
 
     users.push(newUser);
     
-    // delete newUser.password
+    const modifiedUser = {...newUser};
+    delete modifiedUser.password;
 
-    res.status(201).send(newUser);
+    res.status(201).send(modifiedUser);
 }
 
 function updateUser(req, res) {  
-    const body = req.body;
+    let {email} = req.params;
+    let {firstName, lastName, token} = req.body;
 
-    const user = users.find(user => user.email === req.params.email);
+    const user = users.find(user => user.email === email);
 
     if(!user) return res.status(404).send("User not found!");
 
-    user.name = body.name;
+    if(user.token !== token) return res.status(401).send('Unauthenticated!')
+
+    user.firstName = firstName;
+    user.lastName = lastName;
 
     res.send(user);
 }
@@ -64,7 +81,10 @@ function deleteUser(req, res) {
 }
 
 function login(req, res) {  
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    let { email: emailFromParams } = req.params;
+
+    email = email || emailFromParams;
 
     const user = users.find(user => user.email === email);
 
@@ -74,10 +94,14 @@ function login(req, res) {
 
     if(!passwordMached) return res.status(400).send('Invaid credentials!');
     
-    // const modifiedUser = [...user];
-    // delete modifiedUser.password;
+    const token = bcrypt.hashSync('password', 10);
+
+    user.token = token;
+
+    const newUser = {...user, token};
+    delete newUser.password;
     
-    res.status(200).send(user);
+    res.status(200).send(newUser);
 }
 
 function findUser(email){
