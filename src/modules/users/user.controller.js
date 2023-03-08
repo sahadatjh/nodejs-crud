@@ -107,8 +107,6 @@ function login(req, res) {
 function findUser(email){
     const user = users.find(user => user.email === email);
     
-    if(!user) return res.status(404).send('User not found');
-    
     return user;
 }
 
@@ -118,4 +116,5 @@ module.exports.getUser = getUser;
 module.exports.createUser = createUser;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;
+module.exports.findUser = findUser;
 module.exports.login = login;
